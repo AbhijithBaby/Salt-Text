@@ -6,7 +6,17 @@ A secure, offline-first text editor that encrypts your files entirely in the bro
 
 ## Deploy in one step
 
-Download [salt-text.html](https://raw.githubusercontent.com/AbhijithBaby/Salt-Text/main/salt-text.html) and open it in a browser.
+Download [`salt-text.html`](https://raw.githubusercontent.com/AbhijithBaby/Salt-Text/main/salt-text.html) and open it in a browser.
+
+OR 
+
+use terminal 
+```bash
+curl -L -O https://raw.githubusercontent.com/AbhijithBaby/Salt-Text/main/salt-text.html
+```
+```bash
+wget https://raw.githubusercontent.com/AbhijithBaby/Salt-Text/main/salt-text.html
+```
 
 That's it. There is no install, no server, no dependencies, and no network requests. The app uses your device's system font and works fully offline from the first open.
 
