@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>salt-text</title>
+<style>
+/* ── Theme ── */
+:root {
+  --bg:       #000;
+  --surface:  #111;
+  --surface2: #1a1a1a;
+  --border:   #333;
+  --border-h: #555;
+  --fg:       #fff;
+  --muted:    #888;
+  --accent:   #fff;
+  --accent-bg:#222;
+  --green:    #4caf50;
+  --yellow:   #f0c040;
+  --red:      #e05050;
+  --safe-b:   env(safe-area-inset-bottom,0px);
+  --safe-t:   env(safe-area-inset-top,0px);
+  --fs-base:  clamp(12px,1.8vw,15px);
+  --fs-sm:    clamp(10px,1.4vw,12px);
+  --fs-btn:   clamp(11px,1.6vw,13px);
+  --btn-h:    clamp(28px,4vw,34px);
+  --btn-px:   clamp(7px,1.5vw,12px);
+  --r:        5px;
+}
+[data-theme="light"] {
+  --bg:       #fff;
+  --surface:  #f5f5f5;
+  --surface2: #ebebeb;
+  --border:   #ccc;
+  --border-h: #999;
+  --fg:       #000;
+  --muted:    #666;
+  --accent:   #000;
+  --accent-bg:#e0e0e0;
+  --green:    #2a7a2e;
+  --yellow:   #8a6500;
+  --red:      #b00020;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{height:100%;-webkit-text-size-adjust:100%;}
+body{
+  height:100dvh;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg);color:var(--fg);
+  font-family:system-ui,sans-serif;
+  font-size:var(--fs-base);
+  padding-top:var(--safe-t);padding-bottom:var(--safe-b);
+}
+
+/* ── App shell ── */
+.app{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+
+/* ── Header ── */
+.header{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(8px,2vw,14px);
+  height:clamp(44px,7vw,56px);
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+  gap:8px;
+}
+.header-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
+.lock-icon{
+  flex-shrink:0;
+  font-size:clamp(14px,2.5vw,18px);
+  user-select:none;
+}
+.header-titles{min-width:0;flex:1;}
+.app-title{
+  font-size:clamp(13px,2.5vw,18px);
+  font-weight:700;white-space:nowrap;
+}
+.app-sub{
+  font-size:clamp(8px,1.4vw,11px);
+  color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+
+/* ── Toolbar ── */
+.toolbar-wrap{
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.toolbar-row{
+  display:flex;align-items:center;
+  gap:clamp(3px,0.8vw,6px);
+  padding:clamp(4px,1vw,7px) clamp(6px,1.5vw,10px);
+  overflow-x:auto;scrollbar-width:none;
+}
+.toolbar-row::-webkit-scrollbar{display:none;}
+.toolbar-row+.toolbar-row{padding-top:0;padding-bottom:clamp(5px,1vw,8px);}
+.tsep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 2px;}
+
+/* ── Buttons ── */
+button{
+  font-family:system-ui,sans-serif;
+  font-size:var(--fs-btn);
+  font-weight:600;
+  height:var(--btn-h);
+  padding:0 var(--btn-px);
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--fg);
+  cursor:pointer;
+  white-space:nowrap;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+  display:inline-flex;align-items:center;gap:4px;
+}
+button:hover{border-color:var(--border-h);background:var(--accent-bg);}
+button:active{opacity:0.7;}
+button.primary{background:var(--fg);border-color:var(--fg);color:var(--bg);}
+button.primary:hover{opacity:0.85;}
+button.danger{border-color:var(--red);color:var(--red);}
+button.danger:hover{background:var(--red);color:var(--bg);}
+button.active-btn{background:var(--fg);color:var(--bg);border-color:var(--fg);}
+
+/* ── Toggle (Draft on/off) ── */
+.toggle-wrap{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;}
+.toggle-wrap label{font-size:var(--fs-btn);font-weight:600;color:var(--fg);user-select:none;cursor:pointer;}
+.toggle{
+  position:relative;width:34px;height:18px;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{
+  position:absolute;inset:0;
+  background:var(--border);border-radius:9px;cursor:pointer;
+  transition:background 0.2s;
+}
+.toggle input:checked+.toggle-track{background:var(--fg);}
+.toggle-thumb{
+  position:absolute;top:2px;left:2px;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--bg);
+  transition:left 0.2s;
+  pointer-events:none;
+}
+.toggle input:checked~.toggle-thumb{left:18px;}
+
+/* ── Inputs ── */
+input[type=text],input[type=password],select{
+  font-family:system-ui,sans-serif;
+  font-size:var(--fs-btn);
+  height:var(--btn-h);
+  padding:0 8px;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--fg);
+  outline:none;
+}
+input[type=text]:focus,input[type=password]:focus{border-color:var(--fg);}
+select{cursor:pointer;padding-right:20px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 6px center;
+  -webkit-appearance:none;appearance:none;
+}
+select option{background:var(--surface);}
+
+/* ── Draft warning banner ── */
+.draft-warn{
+  flex-shrink:0;
+  font-size:var(--fs-sm);
+  color:var(--yellow);
+  padding:4px 10px;
+  background:transparent;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.draft-warn.hidden{display:none;}
+.draft-warn span{flex:1;}
+
+/* ── Editor area ── */
+.editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+
+/* Find bar — inline below toolbar, not a modal overlay */
+.find-bar{
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  padding:clamp(5px,1vw,8px) clamp(6px,1.5vw,10px);
+  display:none;
+  flex-direction:column;
+  gap:6px;
+}
+.find-bar.open{display:flex;}
+.find-row{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;}
+.find-row input{flex:1;min-width:0;}
+.find-status{font-size:var(--fs-sm);color:var(--muted);padding:0 2px;white-space:nowrap;}
+.find-actions{display:flex;gap:5px;flex-wrap:wrap;}
+
+/* Highlight overlay approach: we use a custom highlight via selection */
+/* The textarea itself with highlight colour for matched text */
+#editor{
+  flex:1;width:100%;
+  padding:clamp(10px,2vw,16px);
+  resize:none;border:none;outline:none;
+  font-family:system-ui,sans-serif;
+  font-size:clamp(13px,2vw,15px);
+  line-height:1.7;
+  background:var(--bg);color:var(--fg);
+  display:block;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+#editor::placeholder{color:var(--muted);}
+::selection{background:var(--fg);color:var(--bg);}
+
+/* ── Status bar ── */
+.statusbar{
+  flex-shrink:0;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 clamp(8px,2vw,12px);
+  height:clamp(26px,4vw,34px);
+  border-top:1px solid var(--border);
+  background:var(--surface2);
+  font-size:var(--fs-sm);color:var(--muted);
+  gap:8px;overflow:hidden;
+}
+.sb-left{display:flex;gap:8px;align-items:center;min-width:0;overflow:hidden;}
+.sb-right{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.sb-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:420px){.sb-kbd{display:none;}}
+
+.status-dot{
+  display:inline-block;width:6px;height:6px;
+  border-radius:50%;background:var(--muted);
+  margin-right:4px;vertical-align:middle;
+}
+.status-dot.ok{background:var(--green);}
+.status-dot.busy{background:var(--yellow);}
+.status-dot.err{background:var(--red);}
+.pwd-locked{color:var(--green);}
+.pwd-unlocked{color:var(--yellow);}
+.kbd{
+  border:1px solid var(--border-h);color:var(--muted);
+  padding:0 4px;border-radius:3px;font-size:10px;
+}
+
+/* ── Toasts ── */
+.toast-stack{
+  position:fixed;
+  bottom:max(16px,var(--safe-b));
+  left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;
+  gap:6px;z-index:9999;pointer-events:none;
+  width:min(360px,92vw);
+}
+.toast{
+  font-family:system-ui,sans-serif;
+  font-size:var(--fs-base);font-weight:600;
+  padding:9px 14px;border-radius:var(--r);
+  border:1px solid var(--border-h);
+  background:var(--surface2);color:var(--fg);
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  animation:tIn .2s ease forwards;
+  pointer-events:all;width:100%;
+  display:flex;align-items:center;gap:10px;
+}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error  {border-color:var(--red);  color:var(--red);}
+.toast.info   {border-color:var(--muted);}
+.toast.out{animation:tOut .18s ease forwards;}
+.toast-undo{
+  margin-left:auto;font-size:var(--fs-sm);
+  background:transparent;border:1px solid currentColor;
+  color:inherit;height:22px;padding:0 8px;border-radius:3px;
+  cursor:pointer;flex-shrink:0;
+}
+@keyframes tIn {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(6px)}}
+
+/* ── Centre modals (password + filename) ── */
+.modal-bg{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;opacity:0;pointer-events:none;
+}
+.modal-bg.open{opacity:1;pointer-events:all;}
+.modal-card{
+  background:var(--surface);
+  border:1px solid var(--border-h);
+  border-radius:8px;
+  padding:20px;
+  width:min(340px,90vw);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+.modal-title{font-size:clamp(14px,2.5vw,17px);font-weight:700;margin-bottom:14px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.field label{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.field input{width:100%;font-size:clamp(14px,2vw,16px);height:clamp(36px,5vw,42px);}
+.modal-error{color:var(--red);font-size:var(--fs-sm);min-height:14px;margin-bottom:8px;}
+.modal-actions{display:flex;gap:8px;margin-top:4px;}
+.modal-actions button{flex:1;height:clamp(36px,5vw,42px);font-size:var(--fs-base);}
+
+/* Password strength */
+.meter{height:3px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:5px;}
+.meter .fill{height:100%;width:0%;border-radius:3px;}
+.strength-row{display:flex;justify-content:space-between;font-size:var(--fs-sm);color:var(--muted);margin-top:3px;}
+
+/* ── Filename modal extras ── */
+.fname-hint{font-size:var(--fs-sm);color:var(--muted);margin-bottom:10px;}
+</style>
+</head>
+<body data-theme="dark">
+<div class="app">
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <span class="lock-icon" aria-hidden="true">🧂</span>
+    <div class="header-titles">
+      <div class="app-title">salt-text</div>
+      <div class="app-sub">Fully encrypted on your device — we store nothing, not even the file</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <select id="themeSelect" aria-label="Theme">
+      <option value="system">System</option>
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+    </select>
+  </div>
+</header>
+
+<!-- Draft warning -->
+<div class="draft-warn hidden" id="draftWarn" role="alert">
+  <span>⚠ Draft stored locally as plaintext.</span>
+  <button id="btnClearDraft" style="padding:0 8px;height:22px;font-size:11px;">Clear</button>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar-wrap" role="toolbar">
+  <div class="toolbar-row">
+    <label><button id="btnOpen">📂 Open</button><input id="fileInput" type="file" accept="application/json,text/plain,text/*" style="display:none"></label>
+    <button id="btnNew" class="danger">＋ New</button>
+    <div class="tsep"></div>
+    <button id="btnSave" class="primary">💾 Save</button>
+    <button id="btnSavePlain">Save Plain</button>
+    <div class="tsep"></div>
+    <button id="btnChangePwd">🔑 Password</button>
+    <button id="btnInsertDT">⏱ Date/Time</button>
+    <button id="btnFind">🔍 Find</button>
+    <div class="tsep"></div>
+    <div class="toggle-wrap">
+      <label for="draftToggle">Draft</label>
+      <label class="toggle">
+        <input type="checkbox" id="draftToggle">
+        <span class="toggle-track"></span>
+        <span class="toggle-thumb"></span>
+      </label>
+    </div>
+  </div>
+  <div class="toolbar-row" style="padding-top:0;padding-bottom:clamp(5px,1vw,8px);">
+    <span style="font-size:var(--fs-sm);color:var(--muted);white-space:nowrap;flex-shrink:0;">File:</span>
+    <input id="fileNameBox" type="text" placeholder="No file — name will be asked on save"
+      autocorrect="off" spellcheck="false" autocomplete="off"
+      style="flex:1;min-width:80px;max-width:480px;"
+      title="Current file name — edit here to rename">
+  </div>
+</div>
+
+<!-- Editor area (find bar + textarea) -->
+<div class="editor-area">
+
+  <!-- Inline Find bar -->
+  <div class="find-bar" id="findBar">
+    <div class="find-row">
+      <input id="findText" type="text" placeholder="Find…" autocorrect="off" spellcheck="false" autocomplete="off">
+      <span class="find-status" id="findStatus"></span>
+      <button id="findPrev" title="Previous">↑</button>
+      <button id="findNext" title="Next">↓</button>
+      <button id="findClose" title="Close">✕</button>
+    </div>
+    <div class="find-row" id="replaceRow">
+      <input id="replaceText" type="text" placeholder="Replace with…" autocorrect="off" spellcheck="false" autocomplete="off">
+      <div class="find-actions">
+        <button id="btnReplace">Replace</button>
+        <button id="btnReplaceAll" class="primary">Replace All</button>
+      </div>
+    </div>
+  </div>
+
+  <textarea id="editor"
+    placeholder="Type something, or open a file…"
+    spellcheck="true" autocorrect="on" autocapitalize="sentences"
+    aria-label="Text editor" aria-multiline="true"></textarea>
+</div>
+
+<!-- Status bar -->
+<div class="statusbar" role="status" aria-live="polite">
+  <div class="sb-left">
+    <span class="sb-item"><span class="status-dot" id="statusDot"></span><span id="status">idle</span></span>
+    <span class="sb-item" id="pwdStatus">no password</span>
+  </div>
+  <div class="sb-right">
+    <span id="wordCount">0 w</span>
+    <span id="charCount">0 ch</span>
+    <span class="sb-kbd">
+      <kbd class="kbd">⌘O</kbd> open &nbsp;
+      <kbd class="kbd">⌘N</kbd> new &nbsp;
+      <kbd class="kbd">⌘S</kbd> save &nbsp;
+      <kbd class="kbd">⌘⇧S</kbd> plain &nbsp;
+      <kbd class="kbd">⌘F</kbd> find &nbsp;
+      <kbd class="kbd">⌘P</kbd> pwd &nbsp;
+      <kbd class="kbd">⌘D</kbd> date
+    </span>
+  </div>
+</div>
+
+</div><!-- /.app -->
+
+<!-- Toasts -->
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- Password prompt modal -->
+<div class="modal-bg" id="pwdModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-title" id="pwdModalTitle">Enter password</div>
+    <div class="field"><label for="pwdInput">Password</label><input id="pwdInput" type="password" autocomplete="current-password"></div>
+    <div class="modal-error" id="pwdError"></div>
+    <div class="modal-actions"><button id="pwdCancel">Cancel</button><button id="pwdOk" class="primary">Unlock</button></div>
+  </div>
+</div>
+
+<!-- Set password modal -->
+<div class="modal-bg" id="changePwdModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-title">Set password</div>
+    <div class="field"><label for="newPwd">Password</label><input id="newPwd" type="password" autocomplete="new-password"></div>
+    <div class="field">
+      <label for="newPwd2">Confirm</label>
+      <input id="newPwd2" type="password" autocomplete="new-password">
+      <div class="meter"><div id="pwdStrengthFill" class="fill"></div></div>
+      <div class="strength-row"><span>Strength</span><span id="pwdStrengthText">—</span></div>
+    </div>
+    <div class="modal-error" id="chgError"></div>
+    <div class="modal-actions"><button id="chgCancel">Cancel</button><button id="chgOk" class="primary">Set</button></div>
+  </div>
+</div>
+
+<!-- Filename modal -->
+<div class="modal-bg" id="fileNameModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-title" id="fnTitle">Enter file name</div>
+    <p class="fname-hint" id="fnHint">Choose a name for your file.</p>
+    <div class="field"><label for="fnInput">File name</label><input id="fnInput" type="text" autocorrect="off" spellcheck="false" autocomplete="off"></div>
+    <div class="modal-error" id="fnError"></div>
+    <div class="modal-actions">
+      <button id="fnCancel">Cancel</button>
+      <button id="fnRandom">Random</button>
+      <button id="fnOk" class="primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom confirm modal (replaces native confirm()) -->
+<div class="modal-bg" id="confirmModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-title" id="confirmMsg">Are you sure?</div>
+    <div class="modal-actions">
+      <button id="confirmCancel">Cancel</button>
+      <button id="confirmOk" class="danger">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Draft risk modal -->
+<div class="modal-bg" id="draftWarnModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-title">⚠ Draft Risk</div>
+    <p style="font-size:var(--fs-base);line-height:1.6;color:var(--muted);margin-bottom:16px;">
+      Enabling draft saves your text to <strong style="color:var(--fg)">localStorage</strong> on this device — it is <strong style="color:var(--fg)">not encrypted</strong> and anyone with access to this browser can read it.<br><br>
+      Nothing is sent to any server. The draft stays only on this device.
+    </p>
+    <div class="modal-actions">
+      <button id="draftWarnCancel">Cancel</button>
+      <button id="draftWarnOk" class="primary">I understand, enable</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ── Crypto ── */
+const _enc=new TextEncoder(),_dec=new TextDecoder();
+function abToB64(b){const a=new Uint8Array(b);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s);}
+function b64ToAb(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer;}
+function rand(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return a;}
+async function deriveKey(pw,salt,iter=250000){
+  const r=await crypto.subtle.importKey('raw',_enc.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},r,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function encryptPayload(pw,text){
+  if(!pw)throw new Error('No password set');
+  const salt=rand(16),iv=rand(12),key=await deriveKey(pw,salt);
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv.buffer},key,_enc.encode(text));
+  return JSON.stringify({v:1,salt:abToB64(salt.buffer),iv:abToB64(iv.buffer),iterations:250000,ciphertext:abToB64(ct)});
+}
+async function decryptPayload(pw,json){
+  if(!pw)throw new Error('No password');
+  let o;try{o=JSON.parse(json);}catch{throw new Error('Invalid file format');}
+  if(!o.salt||!o.iv||!o.ciphertext)throw new Error('Missing fields');
+  const key=await deriveKey(pw,b64ToAb(o.salt),o.iterations||250000);
+  try{return _dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToAb(o.iv)},key,b64ToAb(o.ciphertext)));}
+  catch{throw new Error('Wrong password or corrupted file');}
+}
+
+/* ── Sanitize filename ── */
+function sanitize(raw,ext){
+  let n=(raw||'').trim().replace(/[/\\:*?"<>|]/g,'_').replace(/^\.+/,'').replace(/\s+/g,'_').slice(0,200);
+  if(!n)return null;
+  if(ext&&!n.endsWith(ext))n=n.replace(/\.(enc\.json|json|txt)$/,'')+ext;
+  return n;
+}
+const WORDS=['amber','bolt','cedar','drift','ember','flint','grove','haze','ivory','jade','kite','lumen','mist','nova','opal','prism','quill','raven','slate','tide','umber','vale','wren','zest'];
+function randomName(ext){return WORDS[Math.floor(Math.random()*WORDS.length)]+'-'+Math.floor(Math.random()*9000+1000)+ext;}
+
+/* ── DOM ── */
+const $=id=>document.getElementById(id);
+const editor=$('editor'),fileInput=$('fileInput'),fileNameBox=$('fileNameBox'),
+  btnOpen=$('btnOpen'),btnNew=$('btnNew'),btnSave=$('btnSave'),btnSavePlain=$('btnSavePlain'),
+  btnChangePwd=$('btnChangePwd'),btnInsertDT=$('btnInsertDT'),btnFind=$('btnFind'),
+  btnClearDraft=$('btnClearDraft'),draftToggle=$('draftToggle'),
+  statusEl=$('status'),statusDot=$('statusDot'),pwdStatusEl=$('pwdStatus'),
+  wordCountEl=$('wordCount'),charCountEl=$('charCount'),
+  themeSelect=$('themeSelect'),draftWarn=$('draftWarn'),
+  // find bar
+  findBar=$('findBar'),findTextEl=$('findText'),replaceTextEl=$('replaceText'),
+  findStatus=$('findStatus'),findPrev=$('findPrev'),findNext=$('findNext'),
+  findClose=$('findClose'),btnReplace=$('btnReplace'),btnReplaceAll=$('btnReplaceAll'),
+  // modals
+  pwdModal=$('pwdModal'),pwdModalTitle=$('pwdModalTitle'),pwdInput=$('pwdInput'),
+  pwdOk=$('pwdOk'),pwdCancel=$('pwdCancel'),pwdError=$('pwdError'),
+  changePwdModal=$('changePwdModal'),newPwd=$('newPwd'),newPwd2=$('newPwd2'),
+  chgOk=$('chgOk'),chgCancel=$('chgCancel'),chgError=$('chgError'),
+  pwdStrengthFill=$('pwdStrengthFill'),pwdStrengthText=$('pwdStrengthText'),
+  fileNameModal=$('fileNameModal'),fnTitle=$('fnTitle'),fnHint=$('fnHint'),
+  fnInput=$('fnInput'),fnOk=$('fnOk'),fnCancel=$('fnCancel'),fnRandom=$('fnRandom'),fnError=$('fnError'),
+  draftWarnModal=$('draftWarnModal'),draftWarnOk=$('draftWarnOk'),draftWarnCancel=$('draftWarnCancel'),
+  confirmModal=$('confirmModal'),confirmMsg=$('confirmMsg'),confirmOk=$('confirmOk'),confirmCancel=$('confirmCancel'),
+  toastStack=$('toastStack');
+
+/* ── State ── */
+let currentPassword=null,draftEnabled=false,draftTimer=null,countTimer=null;
+
+/* ── Find state ── */
+let matches=[],matchIdx=-1,rebuildTimer=null;
+
+/* ── Status ── */
+function mark(msg,type='idle'){
+  statusEl.textContent=msg;
+  statusDot.className='status-dot'+(type==='ok'?' ok':type==='busy'?' busy':type==='err'?' err':'');
+}
+function updatePwdStatus(){
+  if(currentPassword){pwdStatusEl.textContent='🔐 locked';pwdStatusEl.className='sb-item pwd-locked';}
+  else{pwdStatusEl.textContent='⚠ no pwd';pwdStatusEl.className='sb-item pwd-unlocked';}
+}
+
+/* ── Toast ── */
+function toast(msg,type='info',ms=3500,undoFn=null){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;el.setAttribute('role','alert');
+  const icon=document.createElement('span');icon.textContent={success:'✓',error:'✕',info:'•'}[type]||'•';
+  const txt=document.createElement('span');txt.textContent=msg;txt.style.flex='1';
+  el.append(icon,txt);
+  if(undoFn){
+    const u=document.createElement('button');u.className='toast-undo';u.textContent='Undo';
+    u.addEventListener('click',()=>{undoFn();el.remove();});
+    el.appendChild(u);
+  }
+  toastStack.appendChild(el);
+  setTimeout(()=>{el.classList.add('out');el.addEventListener('animationend',()=>el.remove(),{once:true});},ms);
+}
+
+/* ── Counts ── */
+function scheduleCount(){clearTimeout(countTimer);countTimer=setTimeout(()=>{const t=editor.value;charCountEl.textContent=t.length.toLocaleString()+' ch';wordCountEl.textContent=(t.trim()?t.trim().split(/\s+/).length:0).toLocaleString()+' w';},100);}
+
+/* ── Draft — stores {text, fileName} so filename survives reload ── */
+function saveDraftNow(){
+  if(!draftEnabled)return;
+  try{
+    const payload=JSON.stringify({text:editor.value,fileName:fileNameBox.value||''});
+    localStorage.setItem('salt_text_draft',payload);
+    draftWarn.classList.remove('hidden');
+  }catch{}
+}
+function clearDraft(){
+  try{localStorage.removeItem('salt_text_draft');}catch{}
+  draftWarn.classList.add('hidden');
+}
+function readDraft(){
+  try{
+    const raw=localStorage.getItem('salt_text_draft');
+    if(!raw)return null;
+    // support both old plain-string and new {text,fileName} format
+    try{const o=JSON.parse(raw);if(o&&typeof o==='object'&&'text' in o)return o;}catch{}
+    return{text:raw,fileName:''};
+  }catch{return null;}
+}
+
+/* ── Custom confirm (replaces native confirm() — no browser dialog leaks) ── */
+function customConfirm(msg,okLabel='Confirm',danger=true){
+  return new Promise(resolve=>{
+    confirmMsg.textContent=msg;
+    confirmOk.textContent=okLabel;
+    confirmOk.className=danger?'danger':'primary';
+    openModal(confirmModal);
+    setTimeout(()=>confirmOk.focus(),60);
+    function ok(){cleanup();resolve(true);}
+    function cancel(){cleanup();resolve(false);}
+    function key(e){if(e.key==='Enter')ok();if(e.key==='Escape')cancel();}
+    function cleanup(){closeModal(confirmModal);confirmOk.removeEventListener('click',ok);confirmCancel.removeEventListener('click',cancel);window.removeEventListener('keydown',key);}
+    confirmOk.addEventListener('click',ok);confirmCancel.addEventListener('click',cancel);window.addEventListener('keydown',key);
+  });
+}
+draftToggle.addEventListener('change',()=>{
+  if(draftToggle.checked){
+    // User just checked it — show risk warning first, revert until confirmed
+    draftToggle.checked=false;
+    openModal(draftWarnModal);
+  } else {
+    // User unchecked — disable immediately
+    draftEnabled=false;
+    try{localStorage.setItem('salt_text_draft_enabled','0');}catch{}
+    clearDraft();
+    mark('draft off','ok');
+  }
+});
+
+draftWarnOk.addEventListener('click',()=>{
+  closeModal(draftWarnModal);
+  draftEnabled=true;
+  draftToggle.checked=true;
+  try{localStorage.setItem('salt_text_draft_enabled','1');}catch{}
+  if(editor.value){saveDraftNow();}
+  mark('draft on','ok');
+  toast('Draft enabled — stored locally only, not encrypted','info',4000);
+});
+
+draftWarnCancel.addEventListener('click',()=>{
+  closeModal(draftWarnModal);
+  draftToggle.checked=false;
+  draftEnabled=false;
+});
+
+btnClearDraft.addEventListener('click',()=>{clearDraft();toast('Draft cleared','success');});
+
+/* ── Editor input ── */
+editor.addEventListener('input',()=>{
+  scheduleCount();
+  if(findBar.classList.contains('open')){
+    clearTimeout(rebuildTimer);
+    rebuildTimer=setTimeout(rebuildMatches,150);
+  }
+  clearTimeout(draftTimer);
+  if(draftEnabled)draftTimer=setTimeout(()=>{saveDraftNow();draftWarn.classList.remove('hidden');},1500);
+});
+
+/* Save draft when file name is edited too */
+fileNameBox.addEventListener('input',()=>{
+  clearTimeout(draftTimer);
+  if(draftEnabled)draftTimer=setTimeout(saveDraftNow,1500);
+});
+
+/* ── Open ── */
+btnOpen.addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const text=await f.text();let parsed=null;
+    try{parsed=JSON.parse(text);}catch{}
+    if(parsed&&parsed.ciphertext){
+      const pw=await promptPassword('Enter password to decrypt');
+      if(pw===null)return;
+      mark('decrypting…','busy');
+      try{
+        editor.value=await decryptPayload(pw,text);
+        currentPassword=pw;updatePwdStatus();scheduleCount();clearDraft();
+        fileNameBox.value=f.name; // remember opened filename
+        mark('decrypted','ok');toast('Decrypted & loaded','success');
+      }catch(err){mark('error','err');toast(err.message,'error');}
+    }else{
+      editor.value=text;currentPassword=null;updatePwdStatus();scheduleCount();
+      fileNameBox.value=f.name; // remember opened filename
+      mark('loaded','ok');toast('Plain text loaded — set a password before saving','info');
+    }
+  }catch{mark('read error','err');toast('Could not read file','error');}
+  finally{fileInput.value='';}
+});
+
+/* ── New ── */
+btnNew.addEventListener('click',async()=>{
+  if(editor.value){
+    const ok=await customConfirm('Discard current content and start fresh?','Discard');
+    if(!ok)return;
+  }
+  editor.value='';currentPassword=null;updatePwdStatus();scheduleCount();clearDraft();
+  fileNameBox.value='';
+  mark('new','ok');
+});
+
+/* ── Filename prompt ── */
+function promptFilename(isEncrypted){
+  return new Promise(resolve=>{
+    const ext=isEncrypted?'.enc.json':'.txt';
+    fnTitle.textContent=isEncrypted?'Save encrypted file':'Save plain text file';
+    fnHint.textContent=`File will be saved as *${ext}`;
+    // pre-fill from current file name box, stripping extension so user sees the base name
+    const existing=(fileNameBox.value||'').trim().replace(/\.(enc\.json|json|txt)$/,'');
+    fnInput.value=existing;
+    fnError.textContent='';
+    fnRandom.onclick=()=>{fnInput.value=randomName(ext);fnInput.focus();fnInput.select();};
+    openModal(fileNameModal);
+    setTimeout(()=>{fnInput.focus();fnInput.select();},60);
+    function ok(){
+      const n=sanitize(fnInput.value,ext);
+      if(!n){fnError.textContent='Enter a valid file name';fnInput.focus();return;}
+      cleanup();resolve(n);
+    }
+    function cancel(){cleanup();resolve(null);}
+    function key(e){if(e.key==='Enter')ok();if(e.key==='Escape')cancel();}
+    function cleanup(){closeModal(fileNameModal);fnOk.removeEventListener('click',ok);fnCancel.removeEventListener('click',cancel);window.removeEventListener('keydown',key);}
+    fnOk.addEventListener('click',ok);fnCancel.addEventListener('click',cancel);window.addEventListener('keydown',key);
+  });
+}
+
+/* ── Save encrypted ── */
+btnSave.addEventListener('click',async()=>{
+  if(!currentPassword){const pw=await promptChangePassword();if(pw===null)return;currentPassword=pw;updatePwdStatus();}
+  const name=await promptFilename(true);if(!name)return;
+  try{
+    mark('encrypting…','busy');
+    const payload=await encryptPayload(currentPassword,editor.value);
+    downloadBlob(payload,'application/json',name);
+    fileNameBox.value=name; // remember saved name
+    clearDraft();mark('saved','ok');toast('Encrypted file saved','success');
+  }catch(e){mark('error','err');toast('Save failed: '+e.message,'error');}
+});
+
+/* ── Save plain (no confirmation) ── */
+btnSavePlain.addEventListener('click',async()=>{
+  const name=await promptFilename(false);if(!name)return;
+  downloadBlob(editor.value,'text/plain',name);
+  fileNameBox.value=name; // remember saved name
+  mark('saved plain','ok');toast('Saved as plain text','info');
+});
+
+function downloadBlob(content,type,name){
+  const url=URL.createObjectURL(new Blob([content],{type}));
+  const a=Object.assign(document.createElement('a'),{href:url,download:name});
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
+/* ── Change password ── */
+btnChangePwd.addEventListener('click',async()=>{
+  const pw=await promptChangePassword();if(pw===null)return;
+  currentPassword=pw;updatePwdStatus();mark('password set','ok');toast('Password set — save to apply','success');
+});
+
+/* ── Date/Time ── */
+btnInsertDT.addEventListener('click',()=>{
+  const s=new Date().toLocaleString(),pos=editor.selectionStart,end=editor.selectionEnd;
+  editor.value=editor.value.slice(0,pos)+s+editor.value.slice(end);
+  editor.selectionStart=editor.selectionEnd=pos+s.length;
+  editor.focus();scheduleCount();mark('inserted','ok');
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FIND & REPLACE — inline bar below toolbar
+   ─────────────────────────────────────────────────────────────────────────── */
+function escRE(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+// Escape replacement string so $ characters aren't treated as regex backreferences
+function escReplace(s){return s.replace(/\$/g,'$$$$');}
+
+/* Rebuild match positions from current editor text */
+function rebuildMatches(){
+  const f=findTextEl.value;
+  matches=[];matchIdx=-1;
+  if(!f){findStatus.textContent='';return;}
+  try{
+    const rx=new RegExp(escRE(f),'g');let m;
+    while((m=rx.exec(editor.value))!==null)matches.push({start:m.index,end:m.index+m[0].length});
+  }catch{}
+  findStatus.textContent=matches.length?`1/${matches.length}`:'no matches';
+  if(matches.length){matchIdx=0;highlightMatch(0);}
+}
+
+/* Highlight a match by selecting it — browser handles scrolling */
+function highlightMatch(idx){
+  if(idx<0||!matches[idx]){return;}
+  const{start,end}=matches[idx];
+  editor.focus();
+  editor.setSelectionRange(start,end);
+  findStatus.textContent=`${idx+1}/${matches.length}`;
+}
+
+function goNext(){
+  if(!matches.length)return;
+  matchIdx=(matchIdx+1)%matches.length;
+  highlightMatch(matchIdx);
+}
+function goPrev(){
+  if(!matches.length)return;
+  matchIdx=(matchIdx-1+matches.length)%matches.length;
+  highlightMatch(matchIdx);
+}
+
+findTextEl.addEventListener('input',rebuildMatches);
+findNext.addEventListener('click',goNext);
+findPrev.addEventListener('click',goPrev);
+
+/* Replace selected match */
+btnReplace.addEventListener('click',()=>{
+  if(!findTextEl.value){toast('Enter text to find','error');return;}
+  if(matchIdx<0||!matches[matchIdx]){toast('No match selected — use ↓ to select one','error');return;}
+  const r=escReplace(replaceTextEl.value);
+  const{start,end}=matches[matchIdx];
+  // verify the selection still matches current editor content
+  if(editor.value.slice(start,end)!==findTextEl.value){rebuildMatches();toast('Selection changed — try again','info');return;}
+  editor.value=editor.value.slice(0,start)+replaceTextEl.value+editor.value.slice(end);
+  scheduleCount();
+  rebuildMatches();
+  if(matches.length)highlightMatch(Math.min(matchIdx,matches.length-1));
+  mark('replaced 1','ok');
+});
+
+/* Replace all — close bar, toast with undo; undo is disabled after any subsequent edit */
+btnReplaceAll.addEventListener('click',()=>{
+  const f=findTextEl.value,r=replaceTextEl.value;
+  if(!f){toast('Enter text to find','error');return;}
+  try{
+    const n=(editor.value.match(new RegExp(escRE(f),'g'))||[]).length;
+    if(!n){toast('No matches found','info');return;}
+    const before=editor.value;
+    let undoValid=true;
+    // Disable undo if editor is edited after replace-all
+    const onEdit=()=>{undoValid=false;editor.removeEventListener('input',onEdit);};
+    editor.addEventListener('input',onEdit);
+    editor.value=editor.value.replace(new RegExp(escRE(f),'g'),escReplace(r));
+    scheduleCount();
+    closeFindBar();
+    mark(`replaced ${n}`,'ok');
+    toast(`Replaced ${n} occurrence${n!==1?'s':''}`, 'success', 6000,()=>{
+      if(!undoValid){toast('Cannot undo — document was edited after replace','error');return;}
+      editor.removeEventListener('input',onEdit);
+      editor.value=before;scheduleCount();mark('undone','ok');
+    });
+  }catch{toast('Invalid search term','error');}
+});
+
+/* Toggle find bar */
+btnFind.addEventListener('click',()=>{
+  if(findBar.classList.contains('open')){closeFindBar();}
+  else{openFindBar();}
+});
+findClose.addEventListener('click',closeFindBar);
+
+function openFindBar(){
+  findBar.classList.add('open');
+  btnFind.classList.add('active-btn');
+  findTextEl.value='';replaceTextEl.value='';
+  matches=[];matchIdx=-1;findStatus.textContent='';
+  setTimeout(()=>findTextEl.focus(),50);
+}
+function closeFindBar(){
+  findBar.classList.remove('open');
+  btnFind.classList.remove('active-btn');
+  matches=[];matchIdx=-1;
+  editor.focus();
+}
+
+/* ── Modals — each modal tracks its own pre-focus element ── */
+const _modalFocus=new WeakMap();
+function openModal(el){
+  _modalFocus.set(el,document.activeElement);
+  el.classList.add('open');
+}
+function closeModal(el){
+  el.classList.remove('open');
+  const prev=_modalFocus.get(el);
+  if(prev&&typeof prev.focus==='function')setTimeout(()=>prev.focus(),40);
+}
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal(bg);});
+});
+
+/* ── Password prompt ── */
+function promptPassword(msg){
+  return new Promise(resolve=>{
+    pwdModalTitle.textContent=msg||'Enter password';
+    pwdInput.value='';pwdError.textContent='';
+    openModal(pwdModal);setTimeout(()=>pwdInput.focus(),60);
+    function ok(){const v=pwdInput.value;if(!v){pwdError.textContent='Password cannot be empty';pwdInput.focus();return;}cleanup();resolve(v);}
+    function cancel(){cleanup();resolve(null);}
+    function key(e){if(e.key==='Enter')ok();if(e.key==='Escape')cancel();}
+    function cleanup(){closeModal(pwdModal);pwdOk.removeEventListener('click',ok);pwdCancel.removeEventListener('click',cancel);window.removeEventListener('keydown',key);setTimeout(()=>{pwdInput.value='';},80);}
+    pwdOk.addEventListener('click',ok);pwdCancel.addEventListener('click',cancel);window.addEventListener('keydown',key);
+  });
+}
+
+/* ── Set password prompt (no minimum length) ── */
+function promptChangePassword(){
+  return new Promise(resolve=>{
+    newPwd.value='';newPwd2.value='';
+    pwdStrengthFill.style.width='0%';pwdStrengthText.textContent='—';chgError.textContent='';
+    openModal(changePwdModal);setTimeout(()=>newPwd.focus(),60);
+    function ok(){
+      const a=newPwd.value,b=newPwd2.value;
+      if(!a){chgError.textContent='Password cannot be empty';newPwd.focus();return;}
+      if(a!==b){chgError.textContent='Passwords do not match';newPwd2.focus();return;}
+      cleanup();resolve(a);
+    }
+    function cancel(){cleanup();resolve(null);}
+    function key(e){if(e.key==='Enter')ok();if(e.key==='Escape')cancel();}
+    function cleanup(){closeModal(changePwdModal);chgOk.removeEventListener('click',ok);chgCancel.removeEventListener('click',cancel);window.removeEventListener('keydown',key);setTimeout(()=>{newPwd.value='';newPwd2.value='';},80);}
+    chgOk.addEventListener('click',ok);chgCancel.addEventListener('click',cancel);window.addEventListener('keydown',key);
+  });
+}
+
+/* ── Password strength ── */
+newPwd.addEventListener('input',()=>{
+  chgError.textContent='';
+  const{score,text,color}=strengthOf(newPwd.value);
+  pwdStrengthFill.style.width=Math.max(4,score*20)+'%';
+  pwdStrengthFill.style.background=color;
+  pwdStrengthText.textContent=text;
+});
+function strengthOf(pw){
+  let s=0;
+  if(pw.length>=6)s++;if(pw.length>=12)s++;
+  if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+  return{score:s,text:['very weak','weak','fair','good','strong','excellent'][s]||'weak',color:['#e05050','#e08030','#c0a020','#50a050','#30c060','#20b0e0'][s]||'#e05050'};
+}
+
+/* ── Theme ── */
+themeSelect.addEventListener('change',()=>{try{localStorage.setItem('salt_text_theme',themeSelect.value);}catch{}applyTheme(themeSelect.value);});
+function applyTheme(p){const dark=window.matchMedia?.('(prefers-color-scheme:dark)').matches;document.body.setAttribute('data-theme',p==='system'?(dark?'dark':'light'):p);}
+window.matchMedia?.('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(themeSelect.value==='system')applyTheme('system');});
+
+/* ── Keyboard shortcuts ── */
+window.addEventListener('keydown',e=>{
+  const mod=e.ctrlKey||e.metaKey;
+  // Block shortcuts when focus is in any interactive field that is NOT the main editor
+  const ae=document.activeElement;
+  const tag=ae?.tagName;
+  const inOtherField=(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')&&ae!==editor;
+  if(inOtherField)return;
+
+  if(mod&&e.key.toLowerCase()==='s'&&!e.shiftKey){e.preventDefault();btnSave.click();}         // Ctrl+S  → Save encrypted
+  if(mod&&e.key.toLowerCase()==='s'&&e.shiftKey){e.preventDefault();btnSavePlain.click();}      // Ctrl+Shift+S → Save plain
+  if(mod&&e.key.toLowerCase()==='o'){e.preventDefault();fileInput.click();}                     // Ctrl+O  → Open
+  if(mod&&e.key.toLowerCase()==='n'){e.preventDefault();btnNew.click();}                        // Ctrl+N  → New
+  if(mod&&e.key.toLowerCase()==='f'){                                                            // Ctrl+F  → Find
+    e.preventDefault();
+    if(findBar.classList.contains('open'))closeFindBar();else openFindBar();
+  }
+  if(mod&&e.key.toLowerCase()==='p'){e.preventDefault();btnChangePwd.click();}                  // Ctrl+P  → Password
+  if(mod&&e.key.toLowerCase()==='d'){e.preventDefault();btnInsertDT.click();}                   // Ctrl+D  → Date/Time
+
+  // Find bar navigation
+  if(findBar.classList.contains('open')){
+    if(e.key==='F3'){e.preventDefault();e.shiftKey?goPrev():goNext();}                          // F3 / Shift+F3
+    if(mod&&e.key.toLowerCase()==='g'){e.preventDefault();e.shiftKey?goPrev():goNext();}        // Ctrl+G / Ctrl+Shift+G
+    if(e.key==='Enter'&&document.activeElement===findTextEl){e.preventDefault();goNext();}      // Enter in find box → next
+  }
+
+  if(e.key==='Escape'){
+    if(findBar.classList.contains('open')){closeFindBar();return;}
+    [pwdModal,changePwdModal,fileNameModal,draftWarnModal,confirmModal].forEach(closeModal);
+  }
+});
+
+/* ── Visual viewport (mobile keyboard) ── */
+if('visualViewport' in window){
+  const appEl=document.querySelector('.app');
+  let vpTimer=null;
+  window.visualViewport.addEventListener('resize',()=>{
+    clearTimeout(vpTimer);
+    vpTimer=setTimeout(()=>{
+      const vh=window.visualViewport.height;
+      const bodyH=document.documentElement.clientHeight;
+      // Only constrain when keyboard is actually shrinking the viewport
+      appEl.style.height=(vh<bodyH?vh:bodyH)+'px';
+    },50);
+  });
+}
+
+/* ── Init ── */
+window.addEventListener('load',()=>{
+  const th=(()=>{try{return localStorage.getItem('salt_text_theme');}catch{return null;}})() || 'dark';
+  themeSelect.value=th;applyTheme(th);
+
+  // Restore draft toggle preference
+  const savedDraftEnabled=(()=>{try{return localStorage.getItem('salt_text_draft_enabled')==='1';}catch{return false;}})();
+  if(savedDraftEnabled){
+    draftEnabled=true;
+    draftToggle.checked=true;
+    const draft=readDraft();
+    if(draft&&draft.text&&draft.text.length){
+      // Use async IIFE so we can await customConfirm inside load handler
+      (async()=>{
+        const ok=await customConfirm('Restore unsaved draft from last session?','Restore',false);
+        if(ok){
+          editor.value=draft.text;
+          if(draft.fileName)fileNameBox.value=draft.fileName;
+          draftWarn.classList.remove('hidden');
+          mark('draft restored','ok');
+          scheduleCount();
+        }else{
+          clearDraft();
+        }
+      })();
+    }
+  }
+
+  updatePwdStatus();scheduleCount();mark('ready','ok');
+});
+</script>
+</body>
+</html>
