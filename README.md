@@ -1,4 +1,4 @@
-# salt-text
+# 🧂 salt-text
 
 A secure, offline-first text editor that encrypts your files entirely in the browser. No server. No account. No tracking. Just download the file and use it.
 
