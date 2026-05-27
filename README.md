@@ -134,4 +134,4 @@ Then open `http://localhost:8080/salt-text.html`.
 
 ## License
 
-Do whatever you want with it. 
+Even if you run my code on a website/server, modified code must be shared under the licences, see the [LICENSE](LICENSE) file
